@@ -1,0 +1,55 @@
+#!/bin/bash
+###################################################################################
+#
+# mnz_sc_curl.sh
+# --------------
+# Auto-populates Service Center via the Spotlight API for Menzies Aviation
+#
+# Version Control
+# ---------------------------------------------------------------------------------
+# | Version |   Date   | Author | Comments
+# ---------------------------------------------------------------------------------
+# |   1.0   | 11/03/16 |  PRF   | First edition
+# ---------------------------------------------------------------------------------
+#
+# Working example:
+# ----------------
+#  curl  -H "Authorization:5bc63cd5088e4d5c4c0ed3fefa1aff43" -H "Content-Type: application/json" -X POST -d '{"vendor_id": "HEWLETT PACKARD","vendor_model": "MODEL123","serial_number": "ADPCURLTST123","company_use": "SUNGARD","company_own": "SUNGARD","contracting_company": "SUNGARD","location": "PA.PHILADELPHIA.011","ip_address": "67.67.67.1","ip_hostname": "my-bogus-test-1","server_os": "LINUX","istatus": "Installed-Active"}' https://staging.sl.tools.sgns.net/api/sc/servers
+###################################################################################
+# Set variables
+UATAPI=https://staging.sl.tools.sgns.net/api/sc/servers
+PRODAPI=https://spotlight.sungardas.com/api/sc/servers
+UATTOKEN=5bc63cd5088e4d5c4c0ed3fefa1aff43
+PRODTOKEN=19d045254c8b3881ea0d62c4996116bc
+>/tmp/ppp
+# Dates
+uat() {
+HOSTNAME=$1
+IP=$5
+LOCATION=$9
+VENDOR=$2
+MODEL=$3
+OS=$7
+SERIAL=$4
+DESC=$8
+#echo "$HOSTNAME,$IP,$LOCATION,$VENDOR,$MODEL,$OS,$SERIAL"
+echo "curl -k -H \"Authorization: Token token=$PRODTOKEN\" -H \"Content-Type: application/json\" -X POST -d \'{\"vendor_id\": \"$VENDOR\",\"vendor_model\": \"$MODEL\",\"serial_number\": \"$SERIAL\",\"company_use\": \"MENZIES PLC\",\"company_own\": \"SASU\",\"contracting_company\": \"MENZIES PLC\",\"location\": \"$LOCATION\",\"ip_address\": \"$IP\",\"ip_hostname\": \"$HOSTNAME\",\"server_os\": \"$OS\",\"istatus\": \"Installed-Active\",\"description\": \"$DESC\"}\' $PRODAPI" >> /tmp/ppp
+}
+#
+# THIS ACTUALLY WORKED 
+#
+# curl -H "Authorization: Token token=5bc63cd5088e4d5c4c0ed3fefa1aff43" -H "Content-Type: application/json" -X POST -d '{"vendor_id": "HEWLETT PACKARD","vendor_model": "MODEL123","serial_number": "ADPCURLTST123","company_use": "SUNGARD","company_own": "SUNGARD","contracting_company": "SUNGARD","location": "PA.PHILADELPHIA.011","ip_address": "67.67.67.1","ip_hostname": "my-bogus-test-1","server_os": "LINUX","istatus": "Installed-Active"}' https://staging.sl.tools.sgns.net/api/sc/servers
+#uatakl-as-app01" "MICROSOFT" "VMware Virtual Platform" "VMWARE-56 4D DC CA BD 50 0E 45-A3 6D 3B B6 A6 50 E9 1A" "10.45.9.18" "akl-as-app01" "WINDOWS" "Menzies Server" "NZ:AUCKLAND.101""
+uat "acc-em-cctv01" "DELL" "PowerEdge R520" "..CN7792153O002E." "" "acc-em-cctv01" "WINDOWS" "Menzies Aviation Server" "GH:ACCRA.101"
+uat "acc-em-data01" "DELL" "PowerEdge T710" "B9XTT4J" "" "acc-em-data01" "WINDOWS" "Menzies Aviation Server" "GH:ACCRA.101"
+uat "amm-em-data01" "DELL" "PowerEdge 2900" "D29RC4J" "" "amm-em-data01" "WINDOWS" "Menzies Aviation Server" "JO:AMMAN.101"
+uat "ams-c01600" "DELL" "Latitude E7250" "73PWK32" "10.200.50.48, 10.200.50.52, 10.200.50.55" "ams-c01600" "WINDOWS" "Menzies Aviation Server" "NL:SCHIPHOL.101"
+uat "aukarsasdc01" "HP" "ProLiant DL360 G7" "AUD105009J" "10.46.11.72" "aukarsasdc01" "WINDOWS" "Menzies Aviation Server" "NZ:AUCKLAND.101"
+uat "bgf-em-data02" "DELL" "PowerEdge R520" "BMBBJ32" "" "bgf-em-data02" "WINDOWS" "Menzies Aviation Server" "CF:BANGUI.101"
+uat "coo-em-data03" "DELL" "PowerEdge R730" "7HGTV42" "" "coo-em-data03" "WINDOWS" "Menzies Aviation Server" "BJ:COTONOU.101"
+uat "jnb-ami-cctv01" "DELL" "PowerEdge R720" "2G3CF02" "" "jnb-ami-cctv01" "WINDOWS" "Menzies Aviation Server" "ZA:JOHANNESBURG.102"
+uat "jnb-em-data01" "DELL" "PowerEdge R720" "HPJC302" "" "jnb-em-data01" "WINDOWS" "Menzies Aviation Server" "ZA:JOHANNESBURG.102"
+uat "uk-lhrmw1-bio05" "" "" "GEGK51600YWX" "10.34.11.8" "uk-lhrmw1-bio05" "WINDOWS" "Menzies Aviation Server" "GB:LONDON.175"
+uat "wdh-em-data01" "DELL" "PowerEdge 2900" "..CN1374083Q01W8." "" "wdh-em-data01" "WINDOWS" "Menzies Aviation Server" "NA:WINDHOEK.101"
+uat "wdhinkdcs" "DELL" "PowerEdge 2950" "H4XJT3J" "" "wdhinkdcs" "WINDOWS" "Menzies Aviation Server" "NA:WINDHOEK.101"
+uat "za-em-jnb-cgo01" "DELL" "PowerEdge R720" "6LYYMW1" "" "za-em-jnb-cgo01" "WINDOWS" "Menzies Aviation Server" "ZA:JOHANNESBURG.102"

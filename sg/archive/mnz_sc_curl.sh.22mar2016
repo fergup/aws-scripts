@@ -1,0 +1,60 @@
+#!/bin/bash
+###################################################################################
+#
+# mnz_sc_curl.sh
+# --------------
+# Auto-populates Service Center via the Spotlight API for Menzies
+#
+# Version Control
+# ---------------------------------------------------------------------------------
+# | Version |   Date   | Author | Comments
+# ---------------------------------------------------------------------------------
+# |   1.0   | 11/03/16 |  PRF   | First edition
+# ---------------------------------------------------------------------------------
+#
+# Working example:
+# ----------------
+#  curl  -H "Authorization:5bc63cd5088e4d5c4c0ed3fefa1aff43" -H "Content-Type: application/json" -X POST -d '{"vendor_id": "HP","vendor_model": "MODEL123","serial_number": "ADPCURLTST123","company_use": "SUNGARD","company_own": "SUNGARD","contracting_company": "SUNGARD","location": "PA.PHILADELPHIA.011","ip_address": "67.67.67.1","ip_hostname": "my-bogus-test-1","server_os": "LINUX","istatus": "Installed-Active"}' https://staging.sl.tools.sgns.net/api/sc/servers
+###################################################################################
+# Set variables
+API_ADDRESS=https://staging.sl.tools.sgns.net/api/sc/servers
+TOKEN=5bc63cd5088e4d5c4c0ed3fefa1aff43
+>/tmp/ppp
+# Dates
+uat() {
+HOSTNAME=$1
+IP=$5
+LOCATION=$9
+VENDOR=$2
+MODEL=$3
+OS=$7
+SERIAL=$4
+#echo "$HOSTNAME,$IP,$LOCATION,$VENDOR,$MODEL,$OS,$SERIAL"
+echo "curl -H \"Authorization: Token token=$TOKEN\" -H \"Content-Type: application/json\" -X POST -d \'{\"vendor_id\": \"$VENDOR\",\"vendor_model\": \"$MODEL\",\"serial_number\": \"$SERIAL\",\"company_use\": \"SUNGARD\",\"company_own\": \"SUNGARD\",\"contracting_company\": \"SUNGARD\",\"location\": \"$LOCATION\",\"ip_address\": \"$IP\",\"ip_hostname\": \"$HOSTNAME\",\"server_os\": \"$OS\",\"istatus\": \"Installed-Active\"}\' $API_ADDRESS" >> /tmp/ppp
+}
+#HOSTNAME=test-menzies
+#IP=10.11.12.13
+#LOCATION=GB:LONDON.001
+#VENDOR=DELL
+#MODEL=Dell-thing
+#OS="RH LINUX"
+#SERIAL=0x8334JKJ
+#echo "curl -H \"Authorization: Token token=$TOKEN\" -H \"Content-Type: application/json\" -X POST -d \'{\"vendor_id\": \"$VENDOR\",\"vendor_model\": \"$MODEL\",\"serial_number\": \"$SERIAL\",\"company_use\": \"SUNGARD\",\"company_own\": \"SUNGARD\",\"contracting_company\": \"SUNGARD\",\"location\": \"$LOCATION\",\"ip_address\": \"$IP\",\"ip_hostname\": \"$HOSTNAME\",\"server_os\": \"$OS\",\"istatus\": \"Installed-Active\"}\' $API_ADDRESS" > /tmp/ppp
+#curl -H "Authorization: Token token=$TOKEN" -H "Content-Type: application/json" -X POST -d \'{"vendor_id": "$VENDOR","vendor_model": "$MODEL","serial_number": "$SERIAL","company_use": "MENZIES PLC","company_own": "SASU","contracting_company": "MENZIES PLC","location": "$LOCATION","ip_address": "$IP","ip_hostname": "$HOSTNAME","server_os": "$OS","istatus": "Installed-Active"}\' $API_ADDRES
+#uat paul-test1 10.10.10.1 GB:LONDON.175 HP DL380 Windows 5xkjsdfsad0
+#
+# THIS ACTUALLY WORKED 
+#
+# curl -H "Authorization: Token token=5bc63cd5088e4d5c4c0ed3fefa1aff43" -H "Content-Type: application/json" -X POST -d '{"vendor_id": "HP","vendor_model": "MODEL123","serial_number": "ADPCURLTST123","company_use": "SUNGARD","company_own": "SUNGARD","contracting_company": "SUNGARD","location": "PA.PHILADELPHIA.011","ip_address": "67.67.67.1","ip_hostname": "my-bogus-test-1","server_os": "LINUX","istatus": "Installed-Active"}' https://staging.sl.tools.sgns.net/api/sc/servers
+#uat paultest1 10.10.10.1 GB:LONDON.001 HP DL380 LINUX x4545jh
+uat "5as-am-dc01" "MICROSOFT" "Virtual Machine" "1302-2083-6736-9672-5387-2615-98" "10.3.90.87" "5as-am-dc01" "WINDOWS" "Menzies DC Server" "GB:BRACKNELL.001"
+uat "5as-as-dc01" "MICROSOFT" "Virtual Machine" "2987-9223-2411-2160-7788-1147-41" "10.3.90.88" "5as-as-dc01" "WINDOWS" "Menzies DC Server" "GB:BRACKNELL.001"
+uat "5as-em-arc1" "DELL" "PowerEdge R710" "FC1RT4J" "10.200.16.87" "5as-em-arc1" "WINDOWS" "Menzies Cpmmvault Archive Server" "GB:BRACKNELL.001"
+uat "5as-em-audit1" "MICROSOFT" "Virtual Machine" "7003-1970-9087-9813-7841-7518-26" "10.3.91.69" "5as-em-audit1" "WINDOWS" "Menzies  Server" "GB:BRACKNELL.001"
+uat "5as-em-back1" "DELL" "PowerEdge R620" "J3MJD5J" "10.200.16.110" "5as-em-back1" "WINDOWS" "Menzies Commserve Server" "GB:BRACKNELL.001"
+uat "5as-em-cv1" "DELL" "PowerEdge R720" "3ZVJD5J" "10.3.130.26" "5as-em-cv1" "WINDOWS" "Menzies Commvault Media Server" "GB:BRACKNELL.001"
+uat "5as-em-data1" "DELL" "PowerEdge R620" "558JD5J" "10.200.16.61" "5as-em-data1" "WINDOWS" "Menzies Data Server" "GB:BRACKNELL.001"
+uat "5as-em-data2" "DELL" "PowerEdge R620" "658JD5J" "10.200.16.62" "5as-em-data2" "WINDOWS" "Menzies Data Server" "GB:BRACKNELL.001"
+uat "5as-em-dc01" "MICROSOFT" "Virtual Machine" "2457-4680-6236-3614-8627-3077-84" "10.3.90.86" "5as-em-dc01" "WINDOWS" "Menzies DC Server" "GB:BRACKNELL.001"
+sed 's/\\//g' /tmp/ppp > /tmp/p4
+sh -x /tmp/p4

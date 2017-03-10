@@ -1,0 +1,56 @@
+#i!/bin/bash
+TIXDIR=/data/sn
+STRATDIR=/data/strat
+ALLEURTIX=$TIXDIR/GlobalXOpenXIncidentsXPFXExport.csv
+vargen() {
+TIME=$1
+TIME2=$2
+COMPANY=$3
+TYPE=$4
+COUNTRY=$5
+case $TIME in
+	0) SEC=0
+	;;
+	7) SEC=604800
+	;;
+	14) SEC=1209600
+	;;
+	30) SEC=2592000
+	;;
+	60) SEC=5184000
+        ;;
+        90) SEC=7776000
+        ;;
+esac
+case $TIME2 in
+	0) SEC2=777600000 # Essentially an infinite number (9000 days), for use when you're only intereted in 'tickets older than X days'
+	;;
+	7) SEC2=604800
+	;;
+	14) SEC2=1209600
+	;;
+	30) SEC2=2592000
+	;;
+	60) SEC2=5184000
+	;;
+	90) SEC2=7776000
+	;;
+esac
+case $TYPE in
+	I) TIK=Incident
+	;;
+	C) TIK=Change
+	;;
+	R) TIK=Request
+	;;
+esac
+[[ -z $COUNTRY ]] && COUNTRY=""
+awk -vtime=$SEC -vtime2=$SEC2 -vcomp=$COMPANY -vcount=$COUNTRY -vtype=$TIK -F'","' '($18~type)&&(($20>time)&&($20<time2))&&($12~comp)&&($10~count) {print}' $ALLEURTIX |wc -l
+}
+SER30=$(vargen 0 30 Serco I )
+echo $SER30
+vargen 30 60 Serco I 
+printf "Under 30 days = $(vargen 0 30 Serco I)"
+#vargen 60 90 Serco I 
+#vargen 90 0 Serco I 
+

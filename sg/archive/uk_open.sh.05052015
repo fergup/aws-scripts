@@ -1,0 +1,85 @@
+!/bin/bash
+###################################################################################
+#
+# uk_open.sh
+# ----------
+# Takes input from Service Now reports and processes them for daily report to UK
+# management to track open Incidents
+#
+# Version Control
+# ---------------------------------------------------------------------------------
+# | Version |   Date   | Author | Comments
+# ---------------------------------------------------------------------------------
+# |   1.0   | 30/04/15 |  PRF   | First edition
+# ---------------------------------------------------------------------------------
+#
+###################################################################################
+# Set variables
+OPEN=/data/sn/UKXOpenXINCXCHGXRITM.csv
+CLOSED=/data/sn/UKXClosedXYesterdayXINCXCHGXRITM.csv
+RRDFILE=/data/rrd/uk_open.rrd
+RRDDATE=$(date +%m/%d/%Y" "%H:%M)
+DATE=$(date +%Y-%m-%d" "%H:%M:%S)
+DDATE=$(date +%d/%m/%Y)
+IFS='"'
+datediff() {
+     d1=$(date -d "$1" +%s)
+     d2=$(date -d "$2" +%s)
+     echo $(( (d1 - d2) / 86400 )) days
+}
+# Incidents
+INCOVER10=$(for i in $(cat $OPEN |awk -F, '($21~"Incident") { print $12 }'); do echo $i;datediff "$DATE" "$i"; done |grep days |sed 's/days//g'|grep [1-9][1-9] |wc -l)
+INCNEWINSCOPE=$(for i in $(cat $OPEN |awk -F, '($21~"Incident") { print $6 }'); do echo $i;datediff "$DATE" "$i"; done   |grep days |sed 's/days//g'|grep [1-9][1-9] |egrep -w "30|31" |wc -l)
+INCNEWINSCOPER=$(for i in $(cat $OPEN |awk -F, '($21~"Incident")&&($5~"Resolved") { print $6 }'); do echo $i;datediff "$DATE" "$i"; done   |grep days |sed 's/days//g'|grep [1-9][1-9] |egrep -w "30|31" |wc -l)
+INCALL=$(cat $OPEN|awk -F, '($21~"Incident") { print $0 }'|wc -l)
+INCCLOSEDY=$(cat $CLOSED|awk -F, '($15~"Incident") { print $0 }'|wc -l)
+INCRES=$(cat $OPEN|awk -F, '($21~"Incident")&&($4~"Resolved") { print $0 }'|wc -l)
+# Request
+REQOVER10=$(for i in $(cat $OPEN |awk -F, '($21~"Request") { print $12 }'); do echo $i;datediff "$DATE" "$i"; done |grep days |sed 's/days//g'|grep [1-9][1-9] |wc -l)
+REQNEWINSCOPE=$(for i in $(cat $OPEN |awk -F, '($21~"Request") { print $6 }'); do echo $i;datediff "$DATE" "$i"; done   |grep days |sed 's/days//g'|grep [1-9][1-9] |egrep -w "30|31" |wc -l)
+REQNEWINSCOPER=$(for i in $(cat $OPEN |awk -F, '($21~"Request")&&($5~"Resolved") { print $6 }'); do echo $i;datediff "$DATE" "$i"; done   |grep days |sed 's/days//g'|grep [1-9][1-9] |egrep -w "30|31" |wc -l)
+REQALL=$(cat $OPEN|awk -F, '($21~"Request") { print $0 }'|wc -l)
+REQCLOSEDY=$(cat $CLOSED|awk -F, '($15~"Request") { print $0 }'|wc -l)
+REQRES=$(cat $OPEN|awk -F, '($21~"Request")&&($4~"Resolved") { print $0 }'|wc -l)
+# Change
+CHGOVER10=$(for i in $(cat $OPEN |awk -F, '($21~"Change") { print $12 }'); do echo $i;datediff "$DATE" "$i"; done |grep days |sed 's/days//g'|grep [1-9][1-9] |wc -l)
+CHGNEWINSCOPE=$(for i in $(cat $OPEN |awk -F, '($21~"Change") { print $6 }'); do echo $i;datediff "$DATE" "$i"; done   |grep days |sed 's/days//g'|grep [1-9][1-9] |egrep -w "30|31" |wc -l)
+CHGNEWINSCOPER=$(for i in $(cat $OPEN |awk -F, '($21~"Change")&&($5~"Resolved") { print $6 }'); do echo $i;datediff "$DATE" "$i"; done   |grep days |sed 's/days//g'|grep [1-9][1-9] |egrep -w "30|31" |wc -l)
+CHGALL=$(cat $OPEN|awk -F, '($21~"Change") { print $0 }'|wc -l)
+CHGCLOSEDY=$(cat $CLOSED|awk -F, '($15~"Change") { print $0 }'|wc -l)
+CHGRES=$(cat $OPEN|awk -F, '($21~"Change")&&($4~"Resolved") { print $0 }'|wc -l)
+# RRD things
+RRDGRAPHALL=/data/images/uk_open_all.png
+RRDGRAPHINC=/data/images/uk_open_inc.png
+RRDGRAPHREQ=/data/images/uk_open_req.png
+RRDGRAPHCHG=/data/images/uk_open_chg.png
+MAILFILE=/data/mail/uk_open_mail
+PHTIX=/data/mail/Paul_Higgins_Open_Tickets
+# Update RRD database file
+#rrdtool update $RRDFILE "$RRDDATE@$INCALL:$INCRES:$INCOVER10:$INCNEWINSCOPE:$INCNEWINSCOPER:$INCCLOSEDY:$REQALL:$REQRES:$REQOVER10:$REQNEWINSCOPE:$REQNEWINSCOPER:$REQCLOSEDY:$CHGALL:$CHGRES:$CHGOVER10:$CHGNEWINSCOPE:$CHGNEWINSCOPER:$CHGCLOSEDY"
+echo $RRDFILE "$RRDDATE@$INCALL:$INCRES:$INCOVER10:$INCNEWINSCOPE:$INCNEWINSCOPER:$INCCLOSEDY:$REQALL:$REQRES:$REQOVER10:$REQNEWINSCOPE:$REQNEWINSCOPER:$REQCLOSEDY:$CHGALL:$CHGRES:$CHGOVER10:$CHGNEWINSCOPE:$CHGNEWINSCOPER:$CHGCLOSEDY"
+rrdtool graph $RRDGRAPHINC -a PNG --title="Open Incidents - Europe (week)" --vertical-label "Number of Tickets" 'DEF:probe1=/data/rrd/uk_open.rrd:inc-all:AVERAGE' 'DEF:probe2=/data/rrd/uk_open.rrd:inc-res:AVERAGE' 'DEF:probe3=/data/rrd/uk_open.rrd:inc-notinten:AVERAGE' 'DEF:probe4=/data/rrd/uk_open.rrd:inc-newinscope:AVERAGE' 'DEF:probe5=/data/rrd/uk_open.rrd:inc-newinscoperes:AVERAGE' 'DEF:probe6=/data/rrd/uk_open.rrd:inc-closedyes:AVERAGE' 'AREA:probe1#FF0000:All Open Tickets:STACK' 'AREA:probe2#00FF00:Resolved:STACK' 'AREA:probe3#0000FF:Not Updated in Ten Days:STACK' 'AREA:probe4#000000:New In Scope:STACK' 'AREA:probe5#FFFF00:New In Scope (Resolved):STACK' 'AREA:probe6#48C4EC:Closed Yesterday:STACK' -w 600 -h 300 -n TITLE:13: --alt-y-grid -l 0 -s now-1w -e now+1d
+rrdtool graph $RRDGRAPHREQ -a PNG --title="Open Requests - Europe (week)" --vertical-label "Number of Tickets" 'DEF:probe1=/data/rrd/uk_open.rrd:req-all:AVERAGE' 'DEF:probe2=/data/rrd/uk_open.rrd:req-res:AVERAGE' 'DEF:probe3=/data/rrd/uk_open.rrd:req-notinten:AVERAGE' 'DEF:probe4=/data/rrd/uk_open.rrd:req-newinscope:AVERAGE' 'DEF:probe5=/data/rrd/uk_open.rrd:req-newinscoperes:AVERAGE' 'DEF:probe6=/data/rrd/uk_open.rrd:req-closedyes:AVERAGE' 'AREA:probe1#FF0000:All Open Tickets:STACK' 'AREA:probe2#00FF00:Resolved:STACK' 'AREA:probe3#0000FF:Not Updated in Ten Days:STACK' 'AREA:probe4#000000:New In Scope:STACK' 'AREA:probe5#FFFF00:New In Scope (Resolved):STACK' 'AREA:probe6#48C4EC:Closed Yesterday:STACK' -w 600 -h 300 -n TITLE:13: --alt-y-grid -l 0 -s now-1w -e now+1d
+rrdtool graph $RRDGRAPHCHG -a PNG --title="Open Changes - Europe (week)" --vertical-label "Number of Tickets" 'DEF:probe1=/data/rrd/uk_open.rrd:chg-all:AVERAGE' 'DEF:probe2=/data/rrd/uk_open.rrd:chg-res:AVERAGE' 'DEF:probe3=/data/rrd/uk_open.rrd:chg-notinten:AVERAGE' 'DEF:probe4=/data/rrd/uk_open.rrd:chg-newinscope:AVERAGE' 'DEF:probe5=/data/rrd/uk_open.rrd:chg-newinscoperes:AVERAGE' 'DEF:probe6=/data/rrd/uk_open.rrd:chg-closedyes:AVERAGE' 'AREA:probe1#FF0000:All Open Tickets:STACK' 'AREA:probe2#00FF00:Resolved:STACK' 'AREA:probe3#0000FF:Not Updated in Ten Days:STACK' 'AREA:probe4#000000:New In Scope:STACK' 'AREA:probe5#FFFF00:New In Scope (Resolved):STACK' 'AREA:probe6#48C4EC:Closed Yesterday:STACK' -w 600 -h 300 -n TITLE:13: --alt-y-grid -l 0 -s now-1w -e now+1d
+echo "" > $MAILFILE
+printf "<table border='1'><span style='font-family:arial'>
+<tr><td width=100 colspan="7" bgcolor="FF9999"><font face="Arial"><align="center"><b>Incidents</td></tr>
+<tr><span style='font-family:arial;font-weight:normal'>
+<td width=100><b>Date</b></font></td><td width=100><b>Raised over 30 days ago</b></td><td width=100><b>In resolved state</b></td><td width=100><b>Not updated in past 10 days</b><td width=100><b>New in scope</b></td><td width=100><b>New in scope resolved</b></td><td width=100><b>Closed yesterday</b></td></span></tr>
+<tr><td width=100><"center">$DDATE</font></td><td width=100><"center">$INCALL</td><td width=100><"center">$INCRES</td><td width=100><"center">$INCOVER10</td><td width=100><"center">$INCNEWINSCOPE<td width=100><"center">$INCNEWINSCOPER</td><td><"center">$INCCLOSEDY</td></span></tr></table>" >> $MAILFILE
+printf "<br><table border='1'><span style='font-family:arial'>
+<tr><td width=100 colspan="7" bgcolor="66CCFF"><font face="Arial"><align="center"><b>Requests</td></tr>
+<tr><span style='font-family:arial;font-weight:normal'>
+<td width=100><b>Date</b></font></td><td width=100><b>Raised over 30 days ago</b></td><td width=100><b>In resolved state</b></td><td width=100><b>Not updated in past 10 days</b><td width=100><b>New in scope</b></td><td width=100><b>New in scope resolved</b></td><td width=100><b>Closed yesterday</b></td></span></tr>
+<tr><td width=100><"center">$DDATE</font></td><td width=100><"center">$REQALL</td><td width=100><"center">$REQRES</td><td width=100><"center">$REQOVER10</td><td width=100><"center">$REQNEWINSCOPE<td width=100><"center">$REQNEWINSCOPER</td><td><"center">$REQCLOSEDY</td></span></tr></table>" >> $MAILFILE
+printf "<br><table border='1'><span style='font-family:arial'>
+<tr><td width=100 colspan="7" bgcolor="33CC33"><font face="Arial"><align="center"><b>Changes</td></tr>
+<tr><span style='font-family:arial;font-weight:normal'>
+<td width=100><b>Date</b></font></td><td width=100><b>Raised over 30 days ago</b></td><td width=100><b>In resolved state</b></td><td width=100><b>Not updated in past 10 days</b><td width=100><b>New in scope</b></td><td width=100><b>New in scope resolved</b></td><td width=100><b>Closed yesterday</b></td></span></tr>
+<tr><td width=100><"center">$DDATE</font></td><td width=100><"center">$CHGALL</td><td width=100><"center">$CHGRES</td><td width=100><"center">$CHGOVER10</td><td width=100><"center">$CHGNEWINSCOPE<td width=100><"center">$CHGNEWINSCOPER</td><td><"center">$CHGCLOSEDY</td></span></tr></table>" >> $MAILFILE
+# Send mail
+cat $OPEN |awk -F, '{ print $10" "$18 }' |sort|uniq -c|egrep "UK|IE|FR|OSS|SE" |sed 's/" "/ (/g' |sed 's/"$/)/g'|sed 's/"//g' |sort -rn > $PHTIX
+# Send report
+#mutt  -e 'set content_type="text/html"' "paul.ferguson@sungardas.com" -s "Daily PH Open Tickets"  -a $RRDGRAPHOPEN -a $PHTIX < $MAILFILE
+#mutt -e 'set content_type="text/html"' "paul.ferguson@sungardas.com,ryan.bell@sungardas.com,stephen.carroll@sungardas.com,paul.higgins@sungardas.com" -s "Daily PH Open Tickets" -a $RRDGRAPHOPEN -a $PHTIX < $MAILFILE
+mutt -e 'set content_type="text/html"' "paul.ferguson@sungardas.com" -s "Daily UK Open Ticket Report" -a $RRDGRAPHINC -a $RRDGRAPHREQ -a $RRDGRAPHCHG -a $PHTIX < $MAILFILE

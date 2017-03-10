@@ -1,0 +1,5 @@
+#!/bin/bash
+#DAY=$1
+DAY=$(date --date=+2days +%m/%d/%Y" "%H:%M)
+rrdtool update /data/rrd/hpsa_1d.rrd "01/$DAY/2015 00:00@104:20:2";rrdtool fetch /data/rrd/hpsa_1d.rrd  AVERAGE -s now-2d -e s+10d
+rrdtool update /data/rrd/hpsa_1d.rrd "$DAY@104:20:2";rrdtool fetch /data/rrd/hpsa_1d.rrd  AVERAGE -s now-2d -e s+10d

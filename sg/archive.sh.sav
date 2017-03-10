@@ -1,0 +1,40 @@
+#!/bin/bash
+###################################################################################
+#
+# archive.sh
+# ----------
+# Archives old input files and reports on MS tools and assets
+#
+# Version Control
+# ---------------------------------------------------------------------------------
+# | Version |   Date   | Author | Comments
+# ---------------------------------------------------------------------------------
+# |   0.1   | 23/01/15 |  PRF   | First edition
+# ---------------------------------------------------------------------------------
+#
+###################################################################################
+#
+# Declare variables
+#
+###################################################################################
+DATE=$(date +%Y%m%d)
+DATADIR=/data
+SNDIR=$DATADIR/sn
+ARCHDIR=/data/archive
+SCIN=$DATADIR/sc-sasu-all.txt
+###################################################################################
+#
+# Do stuff
+#
+###################################################################################
+find $DATADIR -ctime +2 -name "uk-zenoss-dump*" -exec mv {} $ARCHDIR \;  # move older Zenoss dumps to archive
+find $DATADIR -ctime +2 -name "*.csv" -exec mv {} $ARCHDIR \;  # move older CSVs to archive
+cp $SCIN $ARCHDIR/sc-sasu-all.$DATE.csv # copy the Service Center export
+for FILE in $(ls $SNDIR/*.csv)
+	do
+	BASE=$(basename $FILE)
+	cp $FILE $ARCHDIR/$BASE.$DATE
+done
+gzip -f $ARCHDIR/*.$DATE
+gzip -f $ARCHDIR/*.csv
+# NB - the HPSA export (hpsa_servers.csv) is automatically archived by the HPSA job itself
